@@ -1,0 +1,1 @@
+Scriptname WandererMCM extends MCM_ConfigBase

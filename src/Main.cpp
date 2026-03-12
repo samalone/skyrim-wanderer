@@ -39,8 +39,13 @@ void InitializeLogging() {
 
 void OnMessage(SKSE::MessagingInterface::Message* message) {
     if (message->type == SKSE::MessagingInterface::kDataLoaded) {
+        Settings::GetSingleton().Load();
         PlayerUpdateHook::Install();
         QuestTracker::GetSingleton().Enable();
+    }
+    if (message->type == SKSE::MessagingInterface::kPostLoadGame ||
+        message->type == SKSE::MessagingInterface::kNewGame) {
+        Settings::GetSingleton().Load();
     }
 }
 

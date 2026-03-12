@@ -3,6 +3,7 @@
   "version-string": "0.1.0",
   "description": "Automatically tracks nearest quest objectives as you explore Skyrim",
   "dependencies": [
-    "commonlibsse-ng"
+    "commonlibsse-ng",
+    "simpleini"
   ]
 }

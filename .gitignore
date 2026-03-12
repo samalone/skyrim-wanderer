@@ -6,3 +6,6 @@ CMakeUserPresets.json
 *.user
 RESEARCH.md
 .claude/settings.local.json
+
+# Papyrus compiler sources (extracted from BSAs/zips, not ours)
+tools/papyrus-sources/
