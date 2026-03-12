@@ -1,4 +1,5 @@
 #include "QuestTracker.h"
+#include "Overrides.h"
 
 namespace Wanderer {
 
@@ -61,8 +62,12 @@ namespace Wanderer {
             return;
         }
 
-        const auto& settings = Settings::GetSingleton();
-        auto playerPos = player->GetPosition();
+        auto& settings  = Settings::GetSingleton();
+        auto& overrides = Overrides::GetSingleton();
+        auto  playerPos = player->GetPosition();
+
+        // Detect manual toggles before we change anything.
+        overrides.DetectManualToggles();
 
         // Gather all running quests with distance info.
         auto quests = GatherQuests(playerPos);
@@ -80,14 +85,38 @@ namespace Wanderer {
             }
         }
 
-        // Activate quests greedily until we hit the limits.
         int activeQuests  = 0;
         int activeMarkers = 0;
 
-        logger::info("Wanderer: --- evaluation start (maxQuests={}, maxMarkers={}, maxDist={:.0f}) ---",
-            settings.maxActiveQuests, settings.maxActiveMarkers, settings.maxMarkerDistance);
+        logger::info("Wanderer: --- evaluation start (maxQuests={}, maxMarkers={}, maxDist={:.0f}, "
+                     "pinned={}, hidden={}) ---",
+            settings.maxActiveQuests, settings.maxActiveMarkers, settings.maxMarkerDistance,
+            overrides.GetPinnedCount(), overrides.GetHiddenCount());
 
+        // Pass 1: Activate pinned quests first — they get priority.
         for (auto& qi : quests) {
+            if (qi.override != OverrideState::Pinned) continue;
+
+            activeQuests++;
+            activeMarkers += qi.markerCount;
+
+            bool isCurrentlyActive = qi.quest->IsActive();
+            if (!isCurrentlyActive) {
+                qi.quest->data.flags.set(RE::QuestFlag::kActive);
+            }
+
+            overrides.RecordState(qi.quest, true);
+
+            float distCells = qi.nearestDist / kUnitsPerCell;
+            logger::info("  {:>10s}  dist={:7.1f} ({:5.1f} cells)  markers={}  '{}'",
+                isCurrentlyActive ? "pin" : "PIN-ON",
+                qi.nearestDist, distCells, qi.markerCount, qi.quest->GetName());
+        }
+
+        // Pass 2: Activate auto quests greedily until we hit limits.
+        for (auto& qi : quests) {
+            if (qi.override != OverrideState::Auto) continue;
+
             bool shouldActivate = false;
 
             if (qi.nearestDist <= settings.maxMarkerDistance &&
@@ -101,7 +130,6 @@ namespace Wanderer {
 
             bool isCurrentlyActive = qi.quest->IsActive();
 
-            // Log every quest we considered
             const char* action = "skip";
             if (shouldActivate && !isCurrentlyActive) {
                 qi.quest->data.flags.set(RE::QuestFlag::kActive);
@@ -113,9 +141,28 @@ namespace Wanderer {
                 action = "DEACTIVATE";
             }
 
+            overrides.RecordState(qi.quest, shouldActivate);
+
             float distCells = qi.nearestDist / kUnitsPerCell;
             logger::info("  {:>10s}  dist={:7.1f} ({:5.1f} cells)  markers={}  '{}'",
                 action, qi.nearestDist, distCells, qi.markerCount, qi.quest->GetName());
+        }
+
+        // Pass 3: Deactivate hidden quests and log them.
+        for (auto& qi : quests) {
+            if (qi.override != OverrideState::Hidden) continue;
+
+            bool isCurrentlyActive = qi.quest->IsActive();
+            if (isCurrentlyActive) {
+                qi.quest->data.flags.reset(RE::QuestFlag::kActive);
+            }
+
+            overrides.RecordState(qi.quest, false);
+
+            float distCells = qi.nearestDist / kUnitsPerCell;
+            logger::info("  {:>10s}  dist={:7.1f} ({:5.1f} cells)  markers={}  '{}'",
+                isCurrentlyActive ? "HIDE-OFF" : "hidden",
+                qi.nearestDist, distCells, qi.markerCount, qi.quest->GetName());
         }
 
         auto endTime = std::chrono::high_resolution_clock::now();
@@ -134,7 +181,7 @@ namespace Wanderer {
         }
 
         for (auto* quest : dataHandler->GetFormArray<RE::TESQuest>()) {
-            if (!quest || !quest->IsRunning()) {
+            if (!quest || !quest->IsRunning() || quest->IsCompleted()) {
                 continue;
             }
 
@@ -149,7 +196,7 @@ namespace Wanderer {
             qi.quest       = quest;
             qi.nearestDist = dist;
             qi.markerCount = targetCount;
-            qi.wasActiveBeforeWanderer = quest->IsActive();
+            qi.override    = Overrides::GetSingleton().GetState(quest);
             result.push_back(qi);
         }
 

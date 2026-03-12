@@ -1,4 +1,5 @@
 #include "QuestTracker.h"
+#include "Overrides.h"
 
 using namespace Wanderer;
 
@@ -9,8 +10,16 @@ bool ReloadSettings(RE::StaticFunctionTag*) {
     return true;
 }
 
+/// Native Papyrus function: clear all quest overrides.
+bool ClearOverrides(RE::StaticFunctionTag*) {
+    Overrides::GetSingleton().ClearAll();
+    QuestTracker::GetSingleton().ForceEvaluate();
+    return true;
+}
+
 bool RegisterPapyrusFunctions(RE::BSScript::IVirtualMachine* vm) {
     vm->RegisterFunction("ReloadSettings", "WandererMCM", ReloadSettings);
+    vm->RegisterFunction("ClearOverrides", "WandererMCM", ClearOverrides);
     logger::info("Wanderer: registered Papyrus native functions");
     return true;
 }
@@ -53,6 +62,7 @@ void InitializeLogging() {
 void OnMessage(SKSE::MessagingInterface::Message* message) {
     if (message->type == SKSE::MessagingInterface::kDataLoaded) {
         Settings::GetSingleton().Load();
+        Overrides::GetSingleton().Load();
         PlayerUpdateHook::Install();
         QuestTracker::GetSingleton().Enable();
 
@@ -62,6 +72,7 @@ void OnMessage(SKSE::MessagingInterface::Message* message) {
     if (message->type == SKSE::MessagingInterface::kPostLoadGame ||
         message->type == SKSE::MessagingInterface::kNewGame) {
         Settings::GetSingleton().Load();
+        Overrides::GetSingleton().Load();
     }
 }
 

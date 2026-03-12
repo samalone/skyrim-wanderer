@@ -1,15 +1,16 @@
 #pragma once
 
 #include "Settings.h"
+#include "Overrides.h"
 
 namespace Wanderer {
 
     /// Information about a single quest and its nearest objective target.
     struct QuestInfo {
-        RE::TESQuest* quest          = nullptr;
-        float         nearestDist    = std::numeric_limits<float>::max();
-        int           markerCount    = 0;   // number of displayed objectives
-        bool          wasActiveBeforeWanderer = false;
+        RE::TESQuest*  quest          = nullptr;
+        float          nearestDist    = std::numeric_limits<float>::max();
+        int            markerCount    = 0;
+        OverrideState  override       = OverrideState::Auto;
     };
 
     /// Core tracker that re-evaluates quest proximity when the player moves.

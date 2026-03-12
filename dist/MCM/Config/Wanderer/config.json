@@ -76,6 +76,31 @@
         "formatString": "{2} cells",
         "sourceType": "ModSettingFloat"
       }
+    },
+    {
+      "type": "empty"
+    },
+    {
+      "text": "Overrides",
+      "type": "header"
+    },
+    {
+      "text": "To pin a quest (always track), activate it in your journal. To hide a quest (never auto-track), deactivate it. Toggle again to undo.",
+      "type": "text"
+    },
+    {
+      "id": "bResetOverrides:Overrides",
+      "text": "Reset All Overrides",
+      "type": "toggle",
+      "help": "Enable this toggle to clear all pinned/hidden overrides. It will automatically turn itself off after clearing.",
+      "valueOptions": {
+        "sourceType": "ModSettingBool"
+      },
+      "action": {
+        "type": "CallGlobalFunction",
+        "script": "WandererMCM",
+        "function": "ClearOverrides"
+      }
     }
   ]
 }

@@ -18,6 +18,8 @@ set(SOURCES
     src/Settings.cpp
     src/QuestTracker.h
     src/QuestTracker.cpp
+    src/Overrides.h
+    src/Overrides.cpp
 )
 
 add_commonlibsse_plugin(
