@@ -18,6 +18,16 @@ namespace Wanderer {
         logger::info("Wanderer: tracker disabled");
     }
 
+    void QuestTracker::ForceEvaluate() {
+        if (enabled_) {
+            Evaluate();
+            auto* player = RE::PlayerCharacter::GetSingleton();
+            if (player) {
+                lastEvalPos_ = player->GetPosition();
+            }
+        }
+    }
+
     void QuestTracker::OnUpdate() {
         if (!enabled_) {
             return;
@@ -74,6 +84,9 @@ namespace Wanderer {
         int activeQuests  = 0;
         int activeMarkers = 0;
 
+        logger::info("Wanderer: --- evaluation start (maxQuests={}, maxMarkers={}, maxDist={:.0f}) ---",
+            settings.maxActiveQuests, settings.maxActiveMarkers, settings.maxMarkerDistance);
+
         for (auto& qi : quests) {
             bool shouldActivate = false;
 
@@ -88,21 +101,27 @@ namespace Wanderer {
 
             bool isCurrentlyActive = qi.quest->IsActive();
 
+            // Log every quest we considered
+            const char* action = "skip";
             if (shouldActivate && !isCurrentlyActive) {
                 qi.quest->data.flags.set(RE::QuestFlag::kActive);
-                logger::trace("Wanderer: activating quest '{}' (dist: {:.0f})",
-                    qi.quest->GetName(), qi.nearestDist);
+                action = "ACTIVATE";
+            } else if (shouldActivate && isCurrentlyActive) {
+                action = "keep";
             } else if (!shouldActivate && isCurrentlyActive) {
                 qi.quest->data.flags.reset(RE::QuestFlag::kActive);
-                logger::trace("Wanderer: deactivating quest '{}' (dist: {:.0f})",
-                    qi.quest->GetName(), qi.nearestDist);
+                action = "DEACTIVATE";
             }
+
+            float distCells = qi.nearestDist / kUnitsPerCell;
+            logger::info("  {:>10s}  dist={:7.1f} ({:5.1f} cells)  markers={}  '{}'",
+                action, qi.nearestDist, distCells, qi.markerCount, qi.quest->GetName());
         }
 
         auto endTime = std::chrono::high_resolution_clock::now();
         auto elapsedMs = std::chrono::duration<double, std::milli>(endTime - startTime).count();
 
-        logger::info("Wanderer: evaluated {} quests, {} in range, {} activated ({} markers), {:.2f}ms",
+        logger::info("Wanderer: --- evaluation done: {} quests, {} in range, {} activated ({} markers), {:.2f}ms ---",
             quests.size(), questsInRange, activeQuests, activeMarkers, elapsedMs);
     }
 
@@ -119,18 +138,17 @@ namespace Wanderer {
                 continue;
             }
 
-            // Skip quests with no displayed objectives.
-            int markers = CountDisplayedObjectives(quest);
-            if (markers == 0) {
+            // Compute nearest target distance and count resolvable map targets.
+            int targetCount = 0;
+            float dist = GetNearestTargetDistance(quest, playerPos, targetCount);
+            if (targetCount == 0) {
                 continue;
             }
-
-            float dist = GetNearestTargetDistance(quest, playerPos);
 
             QuestInfo qi;
             qi.quest       = quest;
             qi.nearestDist = dist;
-            qi.markerCount = markers;
+            qi.markerCount = targetCount;
             qi.wasActiveBeforeWanderer = quest->IsActive();
             result.push_back(qi);
         }
@@ -138,23 +156,9 @@ namespace Wanderer {
         return result;
     }
 
-    int QuestTracker::CountDisplayedObjectives(RE::TESQuest* quest) {
-        int count = 0;
-        for (const auto& obj : quest->objectives) {
-            if (!obj) {
-                continue;
-            }
-            auto state = obj->state.get();
-            if (state == RE::QUEST_OBJECTIVE_STATE::kDisplayed ||
-                state == RE::QUEST_OBJECTIVE_STATE::kCompletedDisplayed) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    float QuestTracker::GetNearestTargetDistance(RE::TESQuest* quest, RE::NiPoint3 playerPos) {
+    float QuestTracker::GetNearestTargetDistance(RE::TESQuest* quest, RE::NiPoint3 playerPos, int& outTargetCount) {
         float nearest = std::numeric_limits<float>::max();
+        outTargetCount = 0;
 
         for (const auto& obj : quest->objectives) {
             if (!obj) {
@@ -173,7 +177,6 @@ namespace Wanderer {
                     continue;
                 }
 
-                // Resolve the target's alias to an ObjectReference via refAliasMap.
                 auto aliasID = static_cast<std::uint32_t>(target->alias);
 
                 RE::ObjectRefHandle refHandle;
@@ -187,6 +190,17 @@ namespace Wanderer {
                 if (!refPtr) {
                     continue;
                 }
+
+                // Check target conditions — the game uses these to control
+                // whether a marker is actually visible on the map/compass.
+                if (target->conditions.head) {
+                    auto* player = RE::PlayerCharacter::GetSingleton();
+                    if (!target->conditions.IsTrue(player, refPtr.get())) {
+                        continue;
+                    }
+                }
+
+                outTargetCount++;
 
                 float dist = playerPos.GetDistance(refPtr->GetPosition());
                 if (dist < nearest) {

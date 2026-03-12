@@ -2,6 +2,19 @@
 
 using namespace Wanderer;
 
+/// Native Papyrus function: called by WandererMCM.psc when a setting changes.
+bool ReloadSettings(RE::StaticFunctionTag*) {
+    Settings::GetSingleton().Load();
+    QuestTracker::GetSingleton().ForceEvaluate();
+    return true;
+}
+
+bool RegisterPapyrusFunctions(RE::BSScript::IVirtualMachine* vm) {
+    vm->RegisterFunction("ReloadSettings", "WandererMCM", ReloadSettings);
+    logger::info("Wanderer: registered Papyrus native functions");
+    return true;
+}
+
 /// Hook into the player update loop to check movement distance.
 class PlayerUpdateHook {
 public:
@@ -42,6 +55,9 @@ void OnMessage(SKSE::MessagingInterface::Message* message) {
         Settings::GetSingleton().Load();
         PlayerUpdateHook::Install();
         QuestTracker::GetSingleton().Enable();
+
+        auto* papyrus = SKSE::GetPapyrusInterface();
+        papyrus->Register(RegisterPapyrusFunctions);
     }
     if (message->type == SKSE::MessagingInterface::kPostLoadGame ||
         message->type == SKSE::MessagingInterface::kNewGame) {
