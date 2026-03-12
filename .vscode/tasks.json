@@ -2,49 +2,19 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Configure",
-            "type": "shell",
-            "command": "cmd",
-            "args": [
-                "/c",
-                "call \"C:\\Program Files\\Microsoft Visual Studio\\18\\Professional\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x64 && set VCPKG_ROOT=C:\\vcpkg && cmake --preset default"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-            "group": "build",
-            "problemMatcher": "$msCompile"
-        },
-        {
             "label": "Build",
-            "type": "shell",
-            "command": "cmd",
-            "args": [
-                "/c",
-                "call \"C:\\Program Files\\Microsoft Visual Studio\\18\\Professional\\VC\\Auxiliary\\Build\\vcvarsall.bat\" x64 && set VCPKG_ROOT=C:\\vcpkg && cmake --build build"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
+            "type": "process",
+            "command": "${workspaceFolder}/build.bat",
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "problemMatcher": "$msCompile",
-            "dependsOn": "Configure"
+            "problemMatcher": "$msCompile"
         },
         {
             "label": "Install",
-            "type": "shell",
-            "command": "copy",
-            "args": [
-                "/Y",
-                "build\\Wanderer.dll",
-                "G:\\Steam\\steamapps\\common\\Skyrim Special Edition\\Data\\SKSE\\Plugins\\Wanderer.dll"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
+            "type": "process",
+            "command": "${workspaceFolder}/install.bat",
             "dependsOn": "Build",
             "problemMatcher": []
         },

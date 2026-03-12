@@ -44,6 +44,8 @@ namespace Wanderer {
     }
 
     void QuestTracker::Evaluate() {
+        auto startTime = std::chrono::high_resolution_clock::now();
+
         auto* player = RE::PlayerCharacter::GetSingleton();
         if (!player) {
             return;
@@ -59,6 +61,14 @@ namespace Wanderer {
         std::sort(quests.begin(), quests.end(), [](const QuestInfo& a, const QuestInfo& b) {
             return a.nearestDist < b.nearestDist;
         });
+
+        // Count quests in range.
+        int questsInRange = 0;
+        for (const auto& qi : quests) {
+            if (qi.nearestDist <= settings.maxMarkerDistance) {
+                questsInRange++;
+            }
+        }
 
         // Activate quests greedily until we hit the limits.
         int activeQuests  = 0;
@@ -88,6 +98,12 @@ namespace Wanderer {
                     qi.quest->GetName(), qi.nearestDist);
             }
         }
+
+        auto endTime = std::chrono::high_resolution_clock::now();
+        auto elapsedMs = std::chrono::duration<double, std::milli>(endTime - startTime).count();
+
+        logger::info("Wanderer: evaluated {} quests, {} in range, {} activated ({} markers), {:.2f}ms",
+            quests.size(), questsInRange, activeQuests, activeMarkers, elapsedMs);
     }
 
     std::vector<QuestInfo> QuestTracker::GatherQuests(RE::NiPoint3 playerPos) {

@@ -4,3 +4,5 @@ build-debug/
 out/
 CMakeUserPresets.json
 *.user
+RESEARCH.md
+.claude/settings.local.json
