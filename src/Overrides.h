@@ -20,8 +20,8 @@ namespace Wanderer {
         OverrideState GetState(RE::TESQuest* quest) const;
 
         /// Detect manual toggles by comparing actual active flags against
-        /// what Wanderer last set. Call at the start of each evaluation.
-        void DetectManualToggles();
+        /// what Wanderer last set. Returns true if any overrides changed.
+        bool DetectManualToggles();
 
         /// Record what Wanderer set a quest's active state to.
         void RecordState(RE::TESQuest* quest, bool active);
@@ -36,11 +36,11 @@ namespace Wanderer {
         int GetPinnedCount() const;
         int GetHiddenCount() const;
 
-    private:
-        Overrides() = default;
-
         /// Build a stable key from a quest: "PluginName.esp|0x00001234"
         static std::string GetQuestKey(RE::TESQuest* quest);
+
+    private:
+        Overrides() = default;
 
         /// Resolve a quest key back to a FormID (returns 0 if not found).
         static RE::FormID ResolveKey(const std::string& key);

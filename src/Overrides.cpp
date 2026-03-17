@@ -47,9 +47,9 @@ namespace Wanderer {
         return OverrideState::Auto;
     }
 
-    void Overrides::DetectManualToggles() {
+    bool Overrides::DetectManualToggles() {
         auto* dataHandler = RE::TESDataHandler::GetSingleton();
-        if (!dataHandler) return;
+        if (!dataHandler) return false;
 
         bool changed = false;
 
@@ -103,6 +103,8 @@ namespace Wanderer {
         if (changed) {
             Save();
         }
+
+        return changed;
     }
 
     void Overrides::RecordState(RE::TESQuest* quest, bool active) {

@@ -44,6 +44,14 @@ namespace Wanderer {
             return;
         }
 
+        // Check for manual quest toggles every frame (cheap boolean comparisons).
+        // If detected, force an immediate re-evaluation for instant feedback.
+        if (Overrides::GetSingleton().DetectManualToggles()) {
+            Evaluate();
+            lastEvalPos_ = player->GetPosition();
+            return;
+        }
+
         auto playerPos = player->GetPosition();
         float movedSq = playerPos.GetSquaredDistance(lastEvalPos_);
         float thresholdSq = settings.recheckDistance * settings.recheckDistance;
@@ -65,9 +73,6 @@ namespace Wanderer {
         auto& settings  = Settings::GetSingleton();
         auto& overrides = Overrides::GetSingleton();
         auto  playerPos = player->GetPosition();
-
-        // Detect manual toggles before we change anything.
-        overrides.DetectManualToggles();
 
         // Gather all running quests with distance info.
         auto quests = GatherQuests(playerPos);
@@ -108,9 +113,10 @@ namespace Wanderer {
             overrides.RecordState(qi.quest, true);
 
             float distCells = qi.nearestDist / kUnitsPerCell;
-            logger::info("  {:>10s}  dist={:7.1f} ({:5.1f} cells)  markers={}  '{}'",
+            logger::info("  {:>10s}  dist={:7.1f} ({:5.1f} cells)  markers={}  {}  '{}'",
                 isCurrentlyActive ? "pin" : "PIN-ON",
-                qi.nearestDist, distCells, qi.markerCount, qi.quest->GetName());
+                qi.nearestDist, distCells, qi.markerCount,
+                Overrides::GetQuestKey(qi.quest), qi.quest->GetName());
         }
 
         // Pass 2: Activate auto quests greedily until we hit limits.
@@ -144,8 +150,9 @@ namespace Wanderer {
             overrides.RecordState(qi.quest, shouldActivate);
 
             float distCells = qi.nearestDist / kUnitsPerCell;
-            logger::info("  {:>10s}  dist={:7.1f} ({:5.1f} cells)  markers={}  '{}'",
-                action, qi.nearestDist, distCells, qi.markerCount, qi.quest->GetName());
+            logger::info("  {:>10s}  dist={:7.1f} ({:5.1f} cells)  markers={}  {}  '{}'",
+                action, qi.nearestDist, distCells, qi.markerCount,
+                Overrides::GetQuestKey(qi.quest), qi.quest->GetName());
         }
 
         // Pass 3: Deactivate hidden quests and log them.
@@ -160,9 +167,10 @@ namespace Wanderer {
             overrides.RecordState(qi.quest, false);
 
             float distCells = qi.nearestDist / kUnitsPerCell;
-            logger::info("  {:>10s}  dist={:7.1f} ({:5.1f} cells)  markers={}  '{}'",
+            logger::info("  {:>10s}  dist={:7.1f} ({:5.1f} cells)  markers={}  {}  '{}'",
                 isCurrentlyActive ? "HIDE-OFF" : "hidden",
-                qi.nearestDist, distCells, qi.markerCount, qi.quest->GetName());
+                qi.nearestDist, distCells, qi.markerCount,
+                Overrides::GetQuestKey(qi.quest), qi.quest->GetName());
         }
 
         auto endTime = std::chrono::high_resolution_clock::now();
