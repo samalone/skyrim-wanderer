@@ -4,17 +4,15 @@
 using namespace Wanderer;
 
 /// Native Papyrus function: called by WandererMCM.psc when a setting changes.
-bool ReloadSettings(RE::StaticFunctionTag*) {
+void ReloadSettings(RE::StaticFunctionTag*) {
     Settings::GetSingleton().Load();
     QuestTracker::GetSingleton().ForceEvaluate();
-    return true;
 }
 
 /// Native Papyrus function: clear all quest overrides.
-bool ClearOverrides(RE::StaticFunctionTag*) {
+void ClearOverrides(RE::StaticFunctionTag*) {
     Overrides::GetSingleton().ClearAll();
     QuestTracker::GetSingleton().ForceEvaluate();
-    return true;
 }
 
 bool RegisterPapyrusFunctions(RE::BSScript::IVirtualMachine* vm) {

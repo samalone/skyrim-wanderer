@@ -76,10 +76,12 @@ namespace Wanderer {
                 if (currentState == OverrideState::Auto) {
                     overrides_[key] = OverrideState::Hidden;
                     logger::info("Wanderer: override HIDDEN — '{}'", quest->GetName());
+                    RE::DebugNotification(fmt::format("Wanderer: hiding '{}'", quest->GetName()).c_str());
                     changed = true;
                 } else if (currentState == OverrideState::Pinned) {
                     overrides_.erase(key);
                     logger::info("Wanderer: override REMOVED (was Pinned) — '{}'", quest->GetName());
+                    RE::DebugNotification(fmt::format("Wanderer: unpinned '{}'", quest->GetName()).c_str());
                     changed = true;
                 }
             } else if (!weSetActive && isNowActive) {
@@ -87,10 +89,12 @@ namespace Wanderer {
                 if (currentState == OverrideState::Auto) {
                     overrides_[key] = OverrideState::Pinned;
                     logger::info("Wanderer: override PINNED — '{}'", quest->GetName());
+                    RE::DebugNotification(fmt::format("Wanderer: pinning '{}'", quest->GetName()).c_str());
                     changed = true;
                 } else if (currentState == OverrideState::Hidden) {
                     overrides_.erase(key);
                     logger::info("Wanderer: override REMOVED (was Hidden) — '{}'", quest->GetName());
+                    RE::DebugNotification(fmt::format("Wanderer: unhiding '{}'", quest->GetName()).c_str());
                     changed = true;
                 }
             }
@@ -106,9 +110,15 @@ namespace Wanderer {
     }
 
     void Overrides::ClearAll() {
+        int count = static_cast<int>(overrides_.size());
         overrides_.clear();
         logger::info("Wanderer: all overrides cleared");
         Save();
+        if (count > 0) {
+            RE::DebugNotification(fmt::format("Wanderer: cleared {} quest override(s)", count).c_str());
+        } else {
+            RE::DebugNotification("Wanderer: no overrides to clear");
+        }
     }
 
     int Overrides::GetPinnedCount() const {

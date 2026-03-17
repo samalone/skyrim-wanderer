@@ -89,17 +89,17 @@
       "type": "text"
     },
     {
-      "id": "bResetOverrides:Overrides",
       "text": "Reset All Overrides",
-      "type": "toggle",
-      "help": "Enable this toggle to clear all pinned/hidden overrides. It will automatically turn itself off after clearing.",
+      "type": "text",
+      "help": "Click to clear all pinned/hidden overrides and return to fully automatic quest tracking.",
       "valueOptions": {
-        "sourceType": "ModSettingBool"
+        "value": "Click"
       },
       "action": {
         "type": "CallGlobalFunction",
         "script": "WandererMCM",
-        "function": "ClearOverrides"
+        "function": "ClearOverrides",
+        "params": []
       }
     }
   ]
