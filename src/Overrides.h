@@ -29,6 +29,9 @@ namespace Wanderer {
         /// Clear all overrides (MCM reset button).
         void ClearAll();
 
+        /// Clear the runtime tracking state (call on game load/new game).
+        void ResetTracking();
+
         /// Load/save overrides from/to INI file.
         void Load();
         void Save();

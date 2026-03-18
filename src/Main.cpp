@@ -71,6 +71,7 @@ void OnMessage(SKSE::MessagingInterface::Message* message) {
         message->type == SKSE::MessagingInterface::kNewGame) {
         Settings::GetSingleton().Load();
         Overrides::GetSingleton().Load();
+        Overrides::GetSingleton().ResetTracking();
     }
 }
 

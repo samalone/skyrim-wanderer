@@ -102,8 +102,10 @@ namespace Wanderer {
         for (auto& qi : quests) {
             if (qi.override != OverrideState::Pinned) continue;
 
-            activeQuests++;
-            activeMarkers += qi.markerCount;
+            if (settings.pinnedCountTowardsLimits) {
+                activeQuests++;
+                activeMarkers += qi.markerCount;
+            }
 
             bool isCurrentlyActive = qi.quest->IsActive();
             if (!isCurrentlyActive) {

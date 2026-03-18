@@ -123,6 +123,11 @@ namespace Wanderer {
         }
     }
 
+    void Overrides::ResetTracking() {
+        lastSetActive_.clear();
+        logger::info("Wanderer: override tracking reset");
+    }
+
     int Overrides::GetPinnedCount() const {
         int count = 0;
         for (const auto& [key, state] : overrides_) {

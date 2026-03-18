@@ -89,6 +89,15 @@
       "type": "text"
     },
     {
+      "id": "bPinnedCountTowardsLimits:Overrides",
+      "text": "Pinned Quests Count Towards Limits",
+      "type": "toggle",
+      "help": "When enabled, pinned quests count against the max quests and max markers limits. When disabled, pinned quests are always shown in addition to the automatic quests.",
+      "valueOptions": {
+        "sourceType": "ModSettingBool"
+      }
+    },
+    {
       "text": "Reset All Overrides",
       "type": "text",
       "help": "Click to clear all pinned/hidden overrides and return to fully automatic quest tracking.",

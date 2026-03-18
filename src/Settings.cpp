@@ -35,10 +35,13 @@ namespace Wanderer {
         maxMarkerDistance  = distCells * kUnitsPerCell;
         recheckDistance    = recheckCells * kUnitsPerCell;
 
+        pinnedCountTowardsLimits = ini.GetBoolValue("Overrides", "bPinnedCountTowardsLimits", true);
+
         logger::info("Wanderer: settings loaded — enabled={}, maxQuests={}, maxMarkers={}, "
-                     "maxDist={:.0f} ({:.0f} cells), recheck={:.0f} ({:.1f} cells)",
+                     "maxDist={:.0f} ({:.0f} cells), recheck={:.0f} ({:.1f} cells), pinnedCount={}",
                      modEnabled, maxActiveQuests, maxActiveMarkers,
-                     maxMarkerDistance, distCells, recheckDistance, recheckCells);
+                     maxMarkerDistance, distCells, recheckDistance, recheckCells,
+                     pinnedCountTowardsLimits);
     }
 
 }
